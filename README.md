@@ -27,6 +27,9 @@ Documentación Swagger UI: `http://127.0.0.1:8000/docs`
 | GET    | `/users/`        | Listar todos los usuarios            | `role` (query), `is_active` (query)         |
 | GET    | `/users/{id}`    | Obtener un usuario por ID            | `user_id` (path)                            |
 | POST   | `/users/`        | Registrar un nuevo usuario           | Body JSON (name, email, role, is_active)    |
+| PUT    | `/users/{id}`    | Actualizar todos los campos          | Body JSON (name, email, role, is_active)    |
+| PATCH  | `/users/{id}`    | Actualizar campos parciales          | Body JSON (campos opcionales)               |
+| DELETE | `/users/{id}`    | Eliminar un usuario                  | `user_id` (path)                            |
 
 ## Cabeceras HTTP personalizadas
 
@@ -72,6 +75,35 @@ curl -X POST http://127.0.0.1:8000/users/ \
     "role": "admin",
     "is_active": true
   }'
+```
+
+### PUT /users/{user_id}
+
+```bash
+curl -X PUT http://127.0.0.1:8000/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Juan Perez Actualizado",
+    "email": "juan@test.com",
+    "role": "support",
+    "is_active": false
+  }'
+```
+
+### PATCH /users/{user_id}
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "admin"
+  }'
+```
+
+### DELETE /users/{user_id}
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/users/1
 ```
 
 ## Validaciones Pydantic
