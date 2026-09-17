@@ -1,8 +1,8 @@
-# device_systems
+# device_systems v2.0
 
-API REST para la gestión de usuarios del sistema device_systems, construida con FastAPI y Pydantic v2.
+API REST para la gestion de usuarios, dispositivos y prestamos del sistema device_systems, construida con FastAPI, SQLAlchemy y Alembic.
 
-## Instalación
+## Instalacion
 
 ```bash
 python3 -m venv venv
@@ -10,147 +10,109 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Ejecución del servidor
+## Ejecucion del servidor
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-El servidor estará disponible en: `http://127.0.0.1:8000`
+Servidor: `http://127.0.0.1:8000`
+Swagger: `http://127.0.0.1:8000/docs`
+ReDoc: `http://127.0.0.1:8000/redoc`
 
-Documentación Swagger UI: `http://127.0.0.1:8000/docs`
-
-## Tabla de endpoints
-
-| Método | Ruta             | Descripción                          | Parámetros                                  |
-|--------|------------------|--------------------------------------|---------------------------------------------|
-| GET    | `/users/`        | Listar todos los usuarios            | `role` (query), `is_active` (query)         |
-| GET    | `/users/{id}`    | Obtener un usuario por ID            | `user_id` (path)                            |
-| POST   | `/users/`        | Registrar un nuevo usuario           | Body JSON (name, email, role, is_active)    |
-| PUT    | `/users/{id}`    | Actualizar todos los campos          | Body JSON (name, email, role, is_active)    |
-| PATCH  | `/users/{id}`    | Actualizar campos parciales          | Body JSON (campos opcionales)               |
-| DELETE | `/users/{id}`    | Eliminar un usuario                  | `user_id` (path)                            |
-
-## Cabeceras HTTP personalizadas
-
-Todas las respuestas incluyen:
-
-- `X-App-Name: device_systems`
-- `X-API-Version: 1.0`
-
-## Ejemplos de peticiones
-
-### GET /users/
+## Migraciones con Alembic
 
 ```bash
-curl http://127.0.0.1:8000/users/
+alembic revision --autogenerate -m "descripcion"
+alembic upgrade head
+alembic history
 ```
 
-### GET /users/ con filtro por rol
+## Estructura
 
-```bash
-curl "http://127.0.0.1:8000/users/?role=admin"
+```
+device_systems/
+├── app/
+│   ├── main.py
+│   ├── database/
+│   │   └── connection.py
+│   ├── models/
+│   │   ├── user_model.py
+│   │   ├── device_model.py
+│   │   └── loan_model.py
+│   ├── schemas/
+│   │   ├── user_schema.py
+│   │   ├── device_schema.py
+│   │   └── loan_schema.py
+│   ├── routes/
+│   │   ├── user_routes.py
+│   │   ├── device_routes.py
+│   │   └── loan_routes.py
+│   ├── services/
+│   │   ├── user_service.py
+│   │   ├── device_service.py
+│   │   └── loan_service.py
+│   └── dependencies/
+│       └── database_dependency.py
+├── alembic/
+│   └── versions/
+├── alembic.ini
+├── requirements.txt
+└── README.md
 ```
 
-### GET /users/ con filtro por estado
+## Endpoints
 
-```bash
-curl "http://127.0.0.1:8000/users/?is_active=true"
-```
+### Users
 
-### GET /users/{user_id}
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/users/` | Listar usuarios |
+| GET | `/users/{id}` | Obtener usuario |
+| POST | `/users/` | Crear usuario |
+| PUT | `/users/{id}` | Actualizar usuario |
+| PATCH | `/users/{id}` | Actualizar parcial |
+| DELETE | `/users/{id}` | Eliminar usuario |
 
-```bash
-curl http://127.0.0.1:8000/users/1
-```
+### Devices
 
-### POST /users/
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/devices/` | Listar dispositivos |
+| GET | `/devices/{id}` | Obtener dispositivo |
+| POST | `/devices/` | Crear dispositivo |
+| PUT | `/devices/{id}` | Actualizar dispositivo |
+| PATCH | `/devices/{id}` | Actualizar parcial |
+| DELETE | `/devices/{id}` | Eliminar dispositivo |
 
-```bash
-curl -X POST http://127.0.0.1:8000/users/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Juan Perez",
-    "email": "juan@test.com",
-    "role": "admin",
-    "is_active": true
-  }'
-```
+### Loans
 
-### PUT /users/{user_id}
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/loans/` | Listar prestamos |
+| GET | `/loans/{id}` | Obtener prestamo |
+| POST | `/loans/` | Crear prestamo |
+| PATCH | `/loans/{id}/return` | Devolver dispositivo |
+| GET | `/loans/user/{user_id}` | Prestamos de usuario |
+| GET | `/loans/device/{device_id}` | Historial de dispositivo |
 
-```bash
-curl -X PUT http://127.0.0.1:8000/users/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Juan Perez Actualizado",
-    "email": "juan@test.com",
-    "role": "support",
-    "is_active": false
-  }'
-```
+## Modelos
 
-### PATCH /users/{user_id}
+### User
+- id, name, email (unico), role, is_active, created_at
 
-```bash
-curl -X PATCH http://127.0.0.1:8000/users/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "role": "admin"
-  }'
-```
+### Device
+- id, name, serial_number (unico), device_type, brand, is_available, created_at
 
-### DELETE /users/{user_id}
+### Loan
+- id, user_id (FK), device_id (FK), loan_date, return_date, status
 
-```bash
-curl -X DELETE http://127.0.0.1:8000/users/1
-```
+## Relaciones
 
-## Validaciones Pydantic
+- User 1-N Loan
+- Device 1-N Loan
+- Loan N-1 User + Device
 
-- **name**: obligatorio, mínimo 3 caracteres
-- **email**: formato de correo válido
-- **role**: solo valores `admin`, `support`, `user`
-- **is_active**: valor booleano (true/false)
-- **correo duplicado**: retorna error 400
+## Tecnologias
 
-## Tecnologías
-
-- Python 3
-- FastAPI
-- Pydantic v2
-- Uvicorn
-
-## Evidencias
-
-### Raíz del proyecto
-
-![Read Root](evidencias/read%20root.png)
-
-### Endpoints disponibles
-
-![Endpoints](evidencias/endpoins.png)
-
-### Crear usuario (POST)
-
-![Crear usuario](evidencias/crear_usuario.png)
-
-### Búsqueda de usuario por ID
-
-![Búsqueda de users](evidencias/busqueda%20de%20users.png)
-
-### Búsqueda por rol
-
-![Búsqueda de rol](evidencias/busqueda%20de%20rol.png)
-
-### Filtrado por rol admin
-
-![Admin](evidencias/admin.png)
-
-### Prueba con Curl
-
-![Curl](evidencias/Curl.png)
-
-### Validaciones de errores
-
-![Validación](evidencias/validacion.png)
+- Python 3, FastAPI, SQLAlchemy, Alembic, Pydantic v2, SQLite, Uvicorn

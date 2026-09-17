@@ -1,19 +1,18 @@
-# Importamos FastAPI, la clase principal para crear la aplicación
 from fastapi import FastAPI
-# Importamos el router de usuarios (lo renombramos como user_router para evitar conflictos)
 from app.routes.user_routes import router as user_router
+from app.routes.device_routes import router as device_router
+from app.routes.loan_routes import router as loan_router
+from app.database.connection import engine, Base
 
-# Creamos la instancia de FastAPI con título y versión de la API
-# Estos datos aparecen en la documentación Swagger UI
-app = FastAPI(title="device_systems", version="1.0")
+Base.metadata.create_all(bind=engine)
 
-# Registramos el router de usuarios para que sus endpoints estén disponibles
-# Todos los endpoints del router (prefijo /users) se agregan a la app
+app = FastAPI(title="device_systems", version="2.0", description="API REST para la gestion de usuarios, dispositivos y prestamos del sistema device_systems.")
+
 app.include_router(user_router)
+app.include_router(device_router)
+app.include_router(loan_router)
 
 
-# Endpoint raíz que verifica que la API esté funcionando
-# GET / retorna un mensaje de bienvenida
-@app.get("/")
+@app.get("/", tags=["root"])
 def read_root():
-    return {"mensaje": "Bienvenido a device_systems"}
+    return {"mensaje": "Bienvenido a device_systems v2.0"}
